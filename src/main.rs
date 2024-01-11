@@ -4,7 +4,6 @@ fn main() {
     let mut save_path = env::current_exe().expect("Could not get exe location.");
     save_path.pop();
     save_path.push("todo.save");
-    println!("{}", save_path.display());
     let mut todo_list: VecDeque<String> = VecDeque::new();
     if let Err(_) = load_list(save_path.as_os_str(), &mut todo_list) {
         std::fs::File::create(save_path.as_os_str()).unwrap();
@@ -23,6 +22,7 @@ fn main() {
         println!("pop top                   // Removes the bottommost task");
         println!("insert <index> <new_task> // Inserts the task at the given index");
         println!("remove <index>            // Removes the task at the given index");
+        println!("move <index> <index>      // Moves a task from one index to another");
         print!("> ");
         let _ = std::io::stdout().flush();
         let mut input = String::default();
@@ -65,6 +65,18 @@ fn handle_input(input: String, todo_list: &mut VecDeque<String>) {
         let parse_result: Result<usize, prse::ParseError> = prse::try_parse!(input, "remove {}");
         match parse_result {
             Ok(index) => {todo_list.remove(index);},
+            Err(_) => println!("Not a valid command."),
+        }
+    } else if input.to_lowercase().starts_with("move ") {
+        let parse_result: Result<(usize, usize), prse::ParseError> = prse::try_parse!(input, "move {} {}");
+        match parse_result {
+            Ok((from, to)) => {
+                let temp = todo_list.remove(from);
+                match temp {
+                    Some(task) => todo_list.insert(to, task),
+                    None => println!("Invalid index"),
+                }
+            },
             Err(_) => println!("Not a valid command."),
         }
     } else {
